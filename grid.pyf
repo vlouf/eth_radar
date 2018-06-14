@@ -1,0 +1,41 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+
+python module grid ! in 
+    interface  ! in :grid
+        subroutine echo_top_height(r,azi_level0,azi_ref,azi_iter,refl_ref,refl_iter,elev_ref,elev_iter,elev_level0,eth_thld,ethin,eth,nr,na0,nar,nai) ! in :grid:grid.f90
+            real(kind=8) dimension(nr),intent(in) :: r
+            real(kind=8) dimension(na0),intent(in) :: azi_level0
+            real(kind=8) dimension(nar),intent(in) :: azi_ref
+            real(kind=8) dimension(nai),intent(in) :: azi_iter
+            real(kind=8) dimension(nar,nr),intent(in),depend(nar,nr) :: refl_ref
+            real(kind=8) dimension(nai,nr),intent(in),depend(nai,nr) :: refl_iter
+            real(kind=8) intent(in) :: elev_ref
+            real(kind=8) intent(in) :: elev_iter
+            real(kind=8) intent(in) :: elev_level0
+            real(kind=8) intent(in) :: eth_thld
+            real(kind=8) dimension(na0,nr),intent(in),depend(na0,nr) :: ethin
+            real(kind=8) dimension(na0,nr),intent(out),depend(na0,nr) :: eth
+            integer(kind=4), optional,intent(in),check(len(r)>=nr),depend(r) :: nr=len(r)
+            integer(kind=4), optional,intent(in),check(len(azi_level0)>=na0),depend(azi_level0) :: na0=len(azi_level0)
+            integer(kind=4), optional,intent(in),check(len(azi_ref)>=nar),depend(azi_ref) :: nar=len(azi_ref)
+            integer(kind=4), optional,intent(in),check(len(azi_iter)>=nai),depend(azi_iter) :: nai=len(azi_iter)
+        end subroutine echo_top_height
+        subroutine grid_radar(cloudtop,eth_out,xgrid,ygrid,xradar,yradar,theta3db,nx,ny,nxrad,nyrad) ! in :grid:grid.f90
+            real(kind=8) dimension(nyrad,nxrad),intent(in) :: cloudtop
+            real(kind=8) dimension(ny,nx),intent(out),depend(ny,nx) :: eth_out
+            real(kind=8) dimension(nx),intent(in) :: xgrid
+            real(kind=8) dimension(ny),intent(in) :: ygrid
+            real(kind=8) dimension(nyrad,nxrad),intent(in),depend(nyrad,nxrad) :: xradar
+            real(kind=8) dimension(nyrad,nxrad),intent(in),depend(nyrad,nxrad) :: yradar
+            real(kind=8) intent(in) :: theta3db
+            integer(kind=4), optional,intent(in),check(len(xgrid)>=nx),depend(xgrid) :: nx=len(xgrid)
+            integer(kind=4), optional,intent(in),check(len(ygrid)>=ny),depend(ygrid) :: ny=len(ygrid)
+            integer(kind=4), optional,intent(in),check(shape(cloudtop,1)==nxrad),depend(cloudtop) :: nxrad=shape(cloudtop,1)
+            integer(kind=4), optional,intent(in),check(shape(cloudtop,0)==nyrad),depend(cloudtop) :: nyrad=shape(cloudtop,0)
+        end subroutine grid_radar
+    end interface 
+end python module grid
+
+! This file was auto-generated with f2py (version:2).
+! See http://cens.ioc.ee/projects/f2py2e/
