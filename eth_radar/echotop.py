@@ -5,7 +5,7 @@ from numba import jit
 
 
 @jit
-def cloud_top_height(r, azimuth, elevation, st_sweep, ed_sweep, refl, min_range=15e3):
+def cloud_top_height(r, azimuth, elevation, st_sweep, ed_sweep, refl, eth_thld=0, noise_thld=-2, min_range=15e3, verbose=False):
     """
     Estimating Radar Echo-Top Height using the improved method from Lakshmanan et al. (2013).
 
@@ -23,8 +23,14 @@ def cloud_top_height(r, azimuth, elevation, st_sweep, ed_sweep, refl, min_range=
         Radar sweep end ray index.
     refl: <time, nr>
         Radar reflectivity.
+    eth_thld: float
+        Threshold value (e.g., 0 dBZ, 18 dBZ, ...) used to compute the echo top
+    noise_thld: float
+        Signal to noise cutoff threshold value.
     min_range: float
         Minimum range in meter at which the echo top height are computed in order to avoid the cone of silence, generally 15 km.
+    verbose: bool
+        Print debug messages
 
     Returns:
     ========
@@ -35,9 +41,7 @@ def cloud_top_height(r, azimuth, elevation, st_sweep, ed_sweep, refl, min_range=
     nsweep = len(st_sweep)
     cloudtop = np.zeros((na0, len(r))) + np.NaN
     ground_range = np.zeros((nsweep, len(r)))
-    elev_ref = elevation[0]
-    noise_thld = -2
-    eth_thld = 0
+    elev_ref = elevation[0]    
 
     for i, st in enumerate(st_sweep):
         ground_range[i, :] = r * np.cos(np.pi * elevation[st + 1] / 180)
@@ -52,7 +56,8 @@ def cloud_top_height(r, azimuth, elevation, st_sweep, ed_sweep, refl, min_range=
         st_ref = st_sweep[i - 1]
         ed_ref = ed_sweep[i - 1]
 
-        print(i, st, ed, elev_iter, elev_ref)
+        if verbose:
+            print(i, st, ed, elev_iter, elev_ref)
 
         for j in range(na0):
             nazi_ref = np.argmin(np.abs(azimuth[st_ref:ed_ref] - azimuth[j])) + st_ref
