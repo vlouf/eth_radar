@@ -15,10 +15,12 @@ where ZT is the threshold value (e.g., 0 dBZ, 18 dBZ) used to compute the echo t
 
 ## Dependecies
 
-This module requires numpy and numba.
+This module requires [numpy][2] and [numba][3].
 
 ## Reference
 
-1. Lakshmanan, V., Hondl, K., Potvin, C. K. & Preignitz, D. An Improved Method for Estimating Radar Echo-Top Height. Weather Forecast. 28, 481–488 (2013).
+[1.][1] Lakshmanan, V., Hondl, K., Potvin, C. K. & Preignitz, D. An Improved Method for Estimating Radar Echo-Top Height. Weather Forecast. 28, 481–488 (2013).
 
 [1]: https://journals.ametsoc.org/doi/10.1175/WAF-D-12-00084.1
+[2]: http://www.numpy.org/
+[3]: http://numba.pydata.org/
