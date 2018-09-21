@@ -9,6 +9,8 @@ Instead of simply finding the highest elevation angle within a volume, or a virt
 - Find the maximum elevation angle (θb) where reflectivity (Zb) exceeds the echo-top reflectivity threshold. 
 - If θb is not the highest elevation scan in the virtual volume, obtain the reflectivity value (Za) at the next higher elevation angle (θa). Then, the echo-top height is given by the height of the radar beam at an elevation angle:
 
+<a href="https://www.codecogs.com/eqnedit.php?latex=\theta_T&space;=&space;(Z_T&space;-&space;Z_a)&space;\frac{\theta_b&space;-&space;\theta_a}{Z_b&space;-&space;Z_a}&space;&plus;&space;\theta_b" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\theta_T&space;=&space;(Z_T&space;-&space;Z_a)&space;\frac{\theta_b&space;-&space;\theta_a}{Z_b&space;-&space;Z_a}&space;&plus;&space;\theta_b" title="\theta_T = (Z_T - Z_a) \frac{\theta_b - \theta_a}{Z_b - Z_a} + \theta_b" /></a>
+
 where ZT is the threshold value (e.g., 0 dBZ, 18 dBZ) used to compute the echo top.
 
 - If θb is the highest elevation scan available, set . This condition is met far away from the radar if higher-elevation scans have shorter ranges than a base “surveillance” scan and very close to the radar if the highest-elevation scan does not sample the top of the cloud. Under these circumstances, θT is set to be the top of the beam containing dBZ ≥ ZT; that is, the traditional echo-top algorithm is followed when there are no data available from a higher-elevation scan.
