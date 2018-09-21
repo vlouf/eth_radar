@@ -1,8 +1,5 @@
-dailys.ipynb
 *.so
 __pycache__/
 pbs/
-make qsub.ipynb
-ETH Lakshman.ipynb
 *.pyc
 *.pbs
