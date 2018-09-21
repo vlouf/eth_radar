@@ -6,12 +6,12 @@ Method to estimate radar echo top height. This technique uses a volume scan to d
 
 Instead of simply finding the highest elevation angle within a volume, or a virtual volume where reflectivity exceeds some threshold, the modified algorithm is as follows:
 
->- Find the maximum elevation angle where reflectivity exceeds the echo-top reflectivity threshold. Call this θb and the reflectivity value at the elevation Zb.
->- If θb is not the highest elevation scan in the virtual volume, obtain the reflectivity value at the next higher elevation angle, θa, and call it Za. If θa exists within the virtual volume but Za is below the signal-to-noise cutoff, set Za as the minimum reflectivity value detectable by the radar. Then, the echo-top height is given by the height of the radar beam at an elevation angle:
+- Find the maximum elevation angle (θb) where reflectivity (Zb) exceeds the echo-top reflectivity threshold. 
+- If θb is not the highest elevation scan in the virtual volume, obtain the reflectivity value (Za) at the next higher elevation angle (θa). Then, the echo-top height is given by the height of the radar beam at an elevation angle:
 
 where ZT is the threshold value (e.g., 0 dBZ, 18 dBZ) used to compute the echo top.
 
->- If θb is the highest elevation scan available, set . This condition is met far away from the radar if higher-elevation scans have shorter ranges than a base “surveillance” scan and very close to the radar if the highest-elevation scan does not sample the top of the cloud. Under these circumstances, θT is set to be the top of the beam containing dBZ ≥ ZT; that is, the traditional echo-top algorithm is followed when there are no data available from a higher-elevation scan.
+- If θb is the highest elevation scan available, set . This condition is met far away from the radar if higher-elevation scans have shorter ranges than a base “surveillance” scan and very close to the radar if the highest-elevation scan does not sample the top of the cloud. Under these circumstances, θT is set to be the top of the beam containing dBZ ≥ ZT; that is, the traditional echo-top algorithm is followed when there are no data available from a higher-elevation scan.
 
 ## Dependecies
 
