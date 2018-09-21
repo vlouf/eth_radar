@@ -48,8 +48,7 @@ def cloud_top_height(r, azimuth, elevation, st_sweep, ed_sweep, refl, eth_thld=0
 
     for i in range(1, len(st_sweep)):
         st = st_sweep[i]
-        ed = ed_sweep[i]
-        nai = ed - st
+        ed = ed_sweep[i]        
         elev_ref = elevation[st_sweep[i - 1]]
         elev_iter = elevation[st]
 
