@@ -5,7 +5,18 @@ from numba import jit
 
 
 @jit
-def cloud_top_height(r, azimuth, elevation, st_sweep, ed_sweep, refl, eth_thld=0, noise_thld=-2, min_range=15e3, verbose=False):
+def cloud_top_height(
+    r,
+    azimuth,
+    elevation,
+    st_sweep,
+    ed_sweep,
+    refl,
+    eth_thld=0,
+    noise_thld=-2,
+    min_range=15e3,
+    verbose=False,
+):
     """
     Estimating Radar Echo-Top Height using the improved method from Lakshmanan et al. (2013).
 
@@ -41,14 +52,14 @@ def cloud_top_height(r, azimuth, elevation, st_sweep, ed_sweep, refl, eth_thld=0
     nsweep = len(st_sweep)
     cloudtop = np.zeros((na0, len(r))) + np.NaN
     ground_range = np.zeros((nsweep, len(r)))
-    elev_ref = elevation[0]    
+    elev_ref = elevation[0]
 
     for i, st in enumerate(st_sweep):
         ground_range[i, :] = r * np.cos(np.pi * elevation[st + 1] / 180)
 
     for i in range(1, len(st_sweep)):
         st = st_sweep[i]
-        ed = ed_sweep[i]        
+        ed = ed_sweep[i]
         elev_ref = elevation[st_sweep[i - 1]]
         elev_iter = elevation[st]
 
@@ -68,7 +79,7 @@ def cloud_top_height(r, azimuth, elevation, st_sweep, ed_sweep, refl, eth_thld=0
             for k in range(len(r)):
                 if r[k] < min_range:
                     continue
-                    
+
                 gr_ref = ground_range[i - 1, k]
                 npos = np.argmin(np.abs(ground_range[i, :] - gr_ref))
 
@@ -83,19 +94,21 @@ def cloud_top_height(r, azimuth, elevation, st_sweep, ed_sweep, refl, eth_thld=0
 
                 if refa < noise_thld or np.isnan(refa):
                     refa = noise_thld
-                
+
                 height = np.NaN
                 if refb > eth_thld and refa < eth_thld:
                     if elev_iter == 90:
                         theta_total = elev_iter + 0.5
                     else:
-                        theta_total = (eth_thld - refa) * (elev_ref - elev_iter) / (refb - refa) + elev_ref
-                    
+                        theta_total = (eth_thld - refa) * (elev_ref - elev_iter) / (
+                            refb - refa
+                        ) + elev_ref
+
                     height = r[k] * np.sin(np.pi * theta_total / 180)
-                    
+
                     if np.isnan(height):
                         continue
-                        
+
                     if height > cloudtop[j, k] or np.isnan(cloudtop[j, k]):
                         cloudtop[j, k] = height
 
@@ -132,41 +145,46 @@ def grid_cloud_top(data, xradar, yradar, xgrid, ygrid, theta_3db=1.5, rmax=150e3
         Gridded data.
     """
     if xradar.shape != data.shape:
-        raise IndexError('Bad dimensions')        
-    
+        raise IndexError("Bad dimensions")
+
     if len(xgrid.shape) < len(xradar.shape):
         xgrid, ygrid = np.meshgrid(xgrid, ygrid)
-        
+
     eth_out = np.zeros(xgrid.shape) + np.NaN
-        
+
     for i in range(len(xgrid)):
         for j in range(len(ygrid)):
             cnt = 0
             zmax = 0
             xi = xgrid[j, i]
             yi = ygrid[j, i]
-            
-            if (xi ** 2 + yi ** 2 > rmax ** 2):
+
+            if xi ** 2 + yi ** 2 > rmax ** 2:
                 continue
-            
+
             width = 0.5 * (np.sqrt(xi ** 2 + yi ** 2) * theta_3db * np.pi / 180)
-            
+
             for k in range(data.shape[1]):
                 for l in range(data.shape[0]):
                     xr = xradar[l, k]
                     yr = yradar[l, k]
-                    
-                    if xr >= xi - width and xr < xi + width and yr >= yi - width and yr < yi + width:
+
+                    if (
+                        xr >= xi - width
+                        and xr < xi + width
+                        and yr >= yi - width
+                        and yr < yi + width
+                    ):
                         if data[l, k] > 0:
                             zmax = zmax + data[l, k]
                             cnt = cnt + 1
-            
+
             if cnt != 0:
                 eth_out[j, i] = zmax / cnt
-    
+
     return eth_out
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Numba problem workaround
-    os.environ['NUMBA_DISABLE_INTEL_SVML']  = '1'
+    os.environ["NUMBA_DISABLE_INTEL_SVML"] = "1"
