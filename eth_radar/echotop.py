@@ -48,6 +48,8 @@ def cloud_top_height(
     cloudtop: <na, nr>
         Cloud top height in meters, dimensions are na: length of the azimuth array of the first sweep, and nr: length of the input 'r' array.
     """
+    earth_radius = 6371000
+    
     na0 = st_sweep[1]
     nsweep = len(st_sweep)
     cloudtop = np.zeros((na0, len(r))) + np.NaN
@@ -104,7 +106,7 @@ def cloud_top_height(
                             refb - refa
                         ) + elev_ref
 
-                    height = r[k] * np.sin(np.pi * theta_total / 180)
+                    height = r[k] * np.sin(np.pi * theta_total / 180) + + np.sqrt(r[k] ** 2 + earth_radius ** 2) - earth_radius
 
                     if np.isnan(height):
                         continue
