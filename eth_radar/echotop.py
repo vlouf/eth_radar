@@ -118,7 +118,7 @@ def cloud_top_height(
 
 
 @jit
-def grid_cloud_top(data, xradar, yradar, xgrid, ygrid, theta_3db=1.5, rmax=150e3):
+def grid_cloud_top(data, xradar, yradar, xgrid, ygrid, theta_3db=1.5, rmax=150e3, gatespacing=250):
     """
     This function grid the cloud top height data (which are in polar coordinates) onto a Cartesian grid. 
     This gridding technique is made to properly handle the absence of data (i.e. absence of clouds) while 
@@ -139,7 +139,9 @@ def grid_cloud_top(data, xradar, yradar, xgrid, ygrid, theta_3db=1.5, rmax=150e3
     theta_3db: float
         Maximum resolution angle in degrees for polar coordinates.
     rmax: float
-        Maximum range of the data (here if x/y-radar are in meters, then rmax in meter).
+        Maximum range of the data (same unit as x/y).
+    gatespacing: float
+        Gate-to-gate resolution (same unit as x/y).
 
     Returns:
     ========
@@ -165,6 +167,8 @@ def grid_cloud_top(data, xradar, yradar, xgrid, ygrid, theta_3db=1.5, rmax=150e3
                 continue
 
             width = 0.5 * (np.sqrt(xi ** 2 + yi ** 2) * theta_3db * np.pi / 180)
+            if width < gatespacing:
+                width = gatespacing
 
             for k in range(data.shape[1]):
                 for l in range(data.shape[0]):
