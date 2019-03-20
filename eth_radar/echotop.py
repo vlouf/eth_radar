@@ -1,6 +1,20 @@
-import os
-import numpy as np
+"""
+Determination of the echo top height from radar PPI data using the
+Lakshmanan et al. (2013). method
+@title: echotop
+@author: Valentin Louf <valentin.louf@monash.edu>
+@copyright: Valentin Louf (2018-2019)
+@institution: Monash University
+@reference: Lakshmanan et al. (2013), "An Improved Method for Estimating Radar
+            Echo-Top Height". Weather Forecast. 28, 481–488,
+            doi:10.1175/WAF-D-12-00084.1.
 
+.. autosummary::
+    :toctree: generated/
+    cloud_top_height
+    grid_cloud_top
+"""
+import numpy as np
 from numba import jit
 
 
@@ -18,7 +32,8 @@ def cloud_top_height(
     verbose=False,
 ):
     """
-    Estimating Radar Echo-Top Height using the improved method from Lakshmanan et al. (2013).
+    Estimating Radar Echo-Top Height using the improved method from Lakshmanan
+    et al. (2013).
 
     Parameters:
     ===========
@@ -39,17 +54,19 @@ def cloud_top_height(
     noise_thld: float
         Signal to noise cutoff threshold value.
     min_range: float
-        Minimum range in meter at which the echo top height are computed in order to avoid the cone of silence, generally 15 km.
+        Minimum range in meter at which the echo top height are computed to
+        avoid the cone of silence, generally 15 km.
     verbose: bool
         Print debug messages
 
     Returns:
     ========
     cloudtop: <na, nr>
-        Cloud top height in meters, dimensions are na: length of the azimuth array of the first sweep, and nr: length of the input 'r' array.
+        Cloud top height in meters, dimensions are na: length of the azimuth
+        array of the first sweep, and nr: length of the input 'r' array.
     """
     earth_radius = 6371000
-    
+
     na0 = st_sweep[1]
     nsweep = len(st_sweep)
     cloudtop = np.zeros((na0, len(r))) + np.NaN
@@ -102,11 +119,11 @@ def cloud_top_height(
                     if elev_iter == 90:
                         theta_total = elev_iter + 0.5
                     else:
-                        theta_total = (eth_thld - refa) * (elev_ref - elev_iter) / (
-                            refb - refa
-                        ) + elev_ref
+                        theta_total = (eth_thld - refa) * (elev_ref - elev_iter) / (refb - refa) + elev_ref
 
-                    height = r[k] * np.sin(np.pi * theta_total / 180) + + np.sqrt(r[k] ** 2 + earth_radius ** 2) - earth_radius
+                    # Include correction for Earth sphericity.
+                    height = (r[k] * np.sin(np.pi * theta_total / 180) +
+                              np.sqrt(r[k] ** 2 + earth_radius ** 2) - earth_radius)
 
                     if np.isnan(height):
                         continue
@@ -120,9 +137,10 @@ def cloud_top_height(
 @jit
 def grid_cloud_top(data, xradar, yradar, xgrid, ygrid, theta_3db=1.5, rmax=150e3, gatespacing=250):
     """
-    This function grid the cloud top height data (which are in polar coordinates) onto a Cartesian grid. 
-    This gridding technique is made to properly handle the absence of data (i.e. absence of clouds) while 
-    other gridding techniques tend to propagate NaN values.
+    This function grid the cloud top height data (which are in polar
+    coordinates) onto a Cartesian grid. This gridding technique is made to
+    properly handle the absence of data (i.e. absence of clouds) while other
+    gridding techniques tend to propagate NaN values.
 
     Parameters:
     ===========
@@ -189,8 +207,3 @@ def grid_cloud_top(data, xradar, yradar, xgrid, ygrid, theta_3db=1.5, rmax=150e3
                 eth_out[j, i] = zmax / cnt
 
     return eth_out
-
-
-if __name__ == "__main__":
-    # Numba problem workaround
-    os.environ["NUMBA_DISABLE_INTEL_SVML"] = "1"
