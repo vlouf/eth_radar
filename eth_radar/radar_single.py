@@ -16,6 +16,8 @@ into what is expected for the echotop.py script to run. It also saves the data.
 """
 # Python Standard Library
 import os
+import uuid
+import datetime
 import argparse
 import warnings
 import traceback
@@ -27,10 +29,71 @@ import crayons
 import echotop
 
 
-def save_data(radar, cth_grid):
+def save_data(radar, x, y, cth_grid):
     """
-    TODO: save output data function.
+    Save data to netCDF4 format using xarray.
+
+    Parameters:
+    ===========
+    radar:
+        The input radar dataset.
+    x:
+        x-dimension of output grid
+    y:
+        y-dimension of output grid
+    cth_grid:
+        Echo top height output grid.
+
     """
+    dtime = radar.time.to_pandas()
+    date = dtime[0].strftime("%Y%m%d.%H%M")
+    outfilename = f"twp10cpolgrid.c1.eth{ETH_THLD}.{date}.nc"
+    outfilename = os.path.join(OUTPATH, outfilename)
+
+    metadata = radar.attrs.copy()
+
+    metadata['creator_name'] = 'Valentin Louf'
+    metadata['creator_email'] = 'valentin.louf@bom.gov.au'
+    metadata['creator_url'] = 'github.com/vlouf'
+    metadata['institution'] = 'Monash University'
+    metadata['acknowledgement'] = 'This work has been supported by the U.S. Department of Energy Atmospheric Systems' +\
+                                  ' Research Program through the grant DE-SC0014063. Data may be freely distributed.'
+    metadata['created'] = datetime.datetime.utcnow().isoformat()
+    metadata['uuid'] = str(uuid.uuid4())
+    metadata['processing_level'] = 'c1'
+    metadata['source'] = os.path.basename(INFILE)
+    metadata['references'] = 'cf. 10.1175/WAF-D-12-00084.1'
+
+    obsolete_keys = ['Conventions', 'version', 'history', 'field_names']
+    for key in obsolete_keys:
+        try:
+            metadata.pop(key)
+        except KeyError:
+            pass
+
+    dataset = xr.Dataset({
+        'x': (('x'), x.astype(np.int32)),
+        'y': (('y'), y.astype(np.int32)),
+        'echo_top_height': (('y', 'x'), cth_grid),
+    })
+
+    dataset.x.attrs['standard_name'] = 'projection_x_coordinate'
+    dataset.x.attrs['long_name'] = 'X distance on the projection plane from the origin'
+    dataset.x.attrs['units'] = 'm'
+
+    dataset.y.attrs['standard_name'] = 'projection_y_coordinate'
+    dataset.y.attrs['long_name'] = 'Y distance on the projection plane from the origin'
+    dataset.y.attrs['units'] = 'm'
+
+    dataset.echo_top_height.attrs['long_name'] = f"{ETH_THLD}dB_echo_top_height"
+    dataset.echo_top_height.attrs['description'] = '{} dBZ radar echo top height'.format(ETH_THLD)
+    dataset.echo_top_height.attrs['units'] = 'm'
+    dataset.echo_top_height.attrs['_FillValue'] = FILLVALUE
+    dataset.echo_top_height.attrs['valid_min'] = np.int32(0)
+    dataset.echo_top_height.attrs['valid_max'] = np.int32(25000)
+
+    dataset.to_netcdf(outfilename, encoding=args)
+    print(crayons.green(os.path.basename(outfilename) + " written."))
 
     return None
 
@@ -80,14 +143,17 @@ def main():
 
     xgrid = np.arange(-145e3, 146e3, 2500)
     cth_grid = echotop.grid_radar(cth, x, y, xgrid, xgrid)
+    cth_grid = np.ma.masked_invalid(cth_grid).astype(np.int32).filled(FILLVALUE)
     print(crayons.green(f'Data gridded.'))
 
-    save_data(radar, cth_grid)
+    save_data(radar, x=xgrid, y=xgrid, cth_grid=cth_grid)
 
     return None
 
 
 if __name__ == "__main__":
+    FILLVALUE = -9999
+
     # Numba problem workaround
     os.environ["NUMBA_DISABLE_INTEL_SVML"] = "1"
 
@@ -125,11 +191,16 @@ calculation, and rainfall rate estimation."""
         help='Radar reflectivity field name.',
         default='reflectivity')
 
-
     args = parser.parse_args()
     INFILE = args.infile
     OUTPATH = args.outdir
     ETH_THLD = args.eth_thld
     REFL_NAME = args.db_name
+
+    if not os.path.isfile(INFILE):
+        parser.error(f"Input file {INFILE} does not exists.")
+
+    if not os.path.isdir(OUTPATH):
+        parser.error(f"Output directory {OUTPATH} does not exists.")
 
     main()
