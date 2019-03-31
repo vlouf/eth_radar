@@ -89,10 +89,10 @@ def cloud_top_height(
             print(i, st, ed, elev_iter, elev_ref)
 
         for j in range(na0):
-            nazi_ref = np.argmin(np.abs(azimuth[st_ref:ed_ref] - azimuth[j])) + st_ref
-            nazi_iter = np.argmin(np.abs(azimuth[st:ed] - azimuth[j])) + st
+            nbeam_ref = np.argmin(np.abs(azimuth[st_ref:ed_ref] - azimuth[j])) + st_ref
+            nbeam_iter = np.argmin(np.abs(azimuth[st:ed] - azimuth[j])) + st
 
-            if np.abs(azimuth[nazi_ref] - azimuth[nazi_iter]) > 5:
+            if np.abs(azimuth[nbeam_ref] - azimuth[nbeam_iter]) > 5:
                 continue
 
             for k in range(len(r)):
@@ -105,8 +105,8 @@ def cloud_top_height(
                 if np.abs(ground_range[i, npos] - ground_range[0, k] > 1000):
                     continue
 
-                refb = refl[nazi_ref, k]
-                refa = refl[nazi_iter, npos]
+                refb = refl[nbeam_ref, k]
+                refa = refl[nbeam_iter, npos]
 
                 if refb < noise_thld:
                     continue
