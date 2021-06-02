@@ -142,7 +142,7 @@ def main():
     y = R * np.sin(np.pi * A / 180)
 
     xgrid = np.arange(-145e3, 146e3, 2500)
-    cth_grid = echotop.grid_radar(cth, x, y, xgrid, xgrid)
+    cth_grid = echotop.KD_nn_interp(cth, x, y, xgrid, xgrid, nnearest = 24, maxdist = 2500) #nearest=24 should be enough to sample out to 2500m on a 1000m grid
     cth_grid = np.ma.masked_invalid(cth_grid).astype(np.int32).filled(FILLVALUE)
     print(crayons.green(f'Data gridded.'))
 
