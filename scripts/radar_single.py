@@ -47,11 +47,12 @@ def save_data(radar, x, y, cth_grid):
     """
     try:
         dtime = radar.time.to_pandas()
+        date = dtime[0].strftime("%Y%m%d.%H%M")
         metadata = radar.attrs.copy()
     except Exception:
         dtime = cftime.num2pydate(radar.time['data'][0], radar.time['units'])
         metadata = radar.metadata
-    date = dtime[0].strftime("%Y%m%d.%H%M")
+        date = dtime.strftime("%Y%m%d.%H%M")
     outfilename = f"twp10cpolgrid.c1.eth{ETH_THLD}.{date}.nc"
     outfilename = os.path.join(OUTPATH, outfilename)
 
