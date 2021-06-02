@@ -3,7 +3,7 @@ Determination of the echo top height from radar PPI data using the
 Lakshmanan et al. (2013). method
 @title: echotop
 @author: Valentin Louf <valentin.louf@monash.edu>
-@copyright: Valentin Louf (2018-2019)
+@date: 02/06/2021
 @institution: Monash University
 @reference: Lakshmanan et al. (2013), "An Improved Method for Estimating Radar
             Echo-Top Height". Weather Forecast. 28, 481–488,
@@ -15,8 +15,10 @@ Lakshmanan et al. (2013). method
     grid_cloud_top
 """
 import numpy as np
+
 from numba import jit
 from scipy.spatial import cKDTree
+
 
 @jit
 def cloud_top_height(
@@ -134,84 +136,12 @@ def cloud_top_height(
     return cloudtop
 
 
-@jit
-def grid_cloud_top(data, xradar, yradar, xgrid, ygrid, theta_3db=1.5, rmax=150e3, gatespacing=250):
+def grid_cloud_top(data_in, x_in, y_in, x_out, y_out, nnearest = 1, maxdist = None):
     """
-    This function grid the cloud top height data (which are in polar
-    coordinates) onto a Cartesian grid. This gridding technique is made to
-    properly handle the absence of data (i.e. absence of clouds) while other
-    gridding techniques tend to propagate NaN values.
+    Nearest neighbour interpolation using scipy KDTree.
 
     Parameters:
     ===========
-    data: <ny, nx>
-        Data to grid, ideally cloud top heights.
-    xradar: <ny, nx>
-        x-axis Cartesian coordinates array of the input data
-    yradar: <ny, nx>
-        y-axis Cartesian coordinates array of the input data
-    xgrid: <ny_out, nx_out>
-        x-axis Cartesian coordinates array for the output data
-    ygrid: <ny_out, nx_out>
-        y-axis Cartesian coordinates array for the output data
-    theta_3db: float
-        Maximum resolution angle in degrees for polar coordinates.
-    rmax: float
-        Maximum range of the data (same unit as x/y).
-    gatespacing: float
-        Gate-to-gate resolution (same unit as x/y).
-
-    Returns:
-    ========
-    eth_out: <ny_out, nx_out>
-        Gridded data.
-    """
-    if xradar.shape != data.shape:
-        raise IndexError("Bad dimensions")
-
-    if len(xgrid.shape) < len(xradar.shape):
-        xgrid, ygrid = np.meshgrid(xgrid, ygrid)
-
-    eth_out = np.zeros(xgrid.shape) + np.NaN
-
-    for i in range(len(xgrid)):
-        for j in range(len(ygrid)):
-            cnt = 0
-            zmax = 0
-            xi = xgrid[j, i]
-            yi = ygrid[j, i]
-
-            if xi ** 2 + yi ** 2 > rmax ** 2:
-                continue
-
-            width = 0.5 * (np.sqrt(xi ** 2 + yi ** 2) * theta_3db * np.pi / 180)
-            if width < gatespacing:
-                width = gatespacing
-
-            for k in range(data.shape[1]):
-                for l in range(data.shape[0]):
-                    xr = xradar[l, k]
-                    yr = yradar[l, k]
-
-                    if (
-                        xr >= xi - width
-                        and xr < xi + width
-                        and yr >= yi - width
-                        and yr < yi + width
-                    ):
-                        if data[l, k] > 0:
-                            zmax = zmax + data[l, k]
-                            cnt = cnt + 1
-
-            if cnt != 0:
-                eth_out[j, i] = zmax / cnt
-
-    return eth_out
-
-
-def KD_nn_interp(data_in, x_in, y_in, x_out, y_out, nnearest = 1, maxdist = None):
-    """
-    Nearest neighbour interpolation using scipy KDTree
     data_in: ndarray of float with shape (n1, n2)
         Data values to interpolate in input coordinate space
     x_in: ndarray of float with shape (n1, n2)
@@ -226,11 +156,12 @@ def KD_nn_interp(data_in, x_in, y_in, x_out, y_out, nnearest = 1, maxdist = None
         maximum number of nearest neighbours to consider when filling NaN values
     maxdist: float (in units of Cartesian space)
         maximum distance of nearest neighbours to consider when filling NaN values
-        
-        
-    Returns: ndarray of float with shape (n1a, n2a)
+
+    Returns:
+    ========
+    vals_out: ndarray of float with shape (n1a, n2a)
     """
-    
+
     def _make_coord_arrays(x):
         """
         Make sure that the coordinates are provided as ndarray
