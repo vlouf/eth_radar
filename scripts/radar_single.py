@@ -128,7 +128,7 @@ def process_xarray():
     print(crayons.green(f"{os.path.basename(INFILE)} data loaded."))
 
     # Compute ETH
-    cth = echotop.compute_cloud_top(r, azimuth, elevation, st_sweep, ed_sweep, refl, eth_thld=ETH_THLD)
+    cth = echotop.cloud_top_height(r, azimuth, elevation, st_sweep, ed_sweep, refl, eth_thld=ETH_THLD)
     print(crayons.green(f"{ETH_THLD}-dB echo top height computed on polar coordinates."))
 
     # Grid data
@@ -178,7 +178,7 @@ def process_pyart():
     print(crayons.green(f"{os.path.basename(INFILE)} data loaded."))
 
     # Compute ETH
-    cth = echotop.compute_cloud_top(r, azimuth, elevation, st_sweep, ed_sweep, refl, eth_thld=ETH_THLD)
+    cth = echotop.cloud_top_height(r, azimuth, elevation, st_sweep, ed_sweep, refl, eth_thld=ETH_THLD)
     print(crayons.green(f"{ETH_THLD}-dB echo top height computed on polar coordinates."))
 
     # Grid data
