@@ -22,16 +22,7 @@ from scipy.spatial import cKDTree
 
 @jit
 def cloud_top_height(
-    r,
-    azimuth,
-    elevation,
-    st_sweep,
-    ed_sweep,
-    refl,
-    eth_thld=0,
-    noise_thld=-2,
-    min_range=15e3,
-    verbose=False,
+    r, azimuth, elevation, st_sweep, ed_sweep, refl, eth_thld=0, noise_thld=-2, min_range=15e3, verbose=False,
 ):
     """
     Estimating Radar Echo-Top Height using the improved method from Lakshmanan
@@ -124,8 +115,9 @@ def cloud_top_height(
                         theta_total = (eth_thld - refa) * (elev_ref - elev_iter) / (refb - refa) + elev_ref
 
                     # Include correction for Earth sphericity.
-                    height = (r[k] * np.sin(np.pi * theta_total / 180) +
-                              np.sqrt(r[k] ** 2 + earth_radius ** 2) - earth_radius)
+                    height = (
+                        r[k] * np.sin(np.pi * theta_total / 180) + np.sqrt(r[k] ** 2 + earth_radius ** 2) - earth_radius
+                    )
 
                     if np.isnan(height):
                         continue
@@ -136,7 +128,7 @@ def cloud_top_height(
     return cloudtop
 
 
-def grid_cloud_top(data_in, x_in, y_in, x_out, y_out, nnearest = 1, maxdist = None):
+def grid_cloud_top(data_in, x_in, y_in, x_out, y_out, nnearest=1, maxdist=None):
     """
     Nearest neighbour interpolation using scipy KDTree.
 
@@ -184,15 +176,15 @@ def grid_cloud_top(data_in, x_in, y_in, x_out, y_out, nnearest = 1, maxdist = No
                 raise Exception("Cannot deal wih 3-d arrays, yet.")
         return x
 
-    #transform output coordinates into pairs of coordiantes
+    # transform output coordinates into pairs of coordinates
     coord_out = _make_coord_arrays([x_out.ravel(), y_out.ravel()])
     vals_in = data_in.ravel()
 
-    #build KDTree
+    # build KDTree
     tree = cKDTree(np.c_[x_in.ravel(), y_in.ravel()])
 
-    #query tree using output coordinates
-    dists, idx = tree.query(coord_out, k=nnearest+1)
+    # query tree using output coordinates
+    dists, idx = tree.query(coord_out, k=nnearest + 1)
     # avoid bug, if there is only one neighbor at all
     if dists.ndim == 1:
         dists = dists[:, np.newaxis]
@@ -214,7 +206,7 @@ def grid_cloud_top(data_in, x_in, y_in, x_out, y_out, nnearest = 1, maxdist = No
             if not np.count_nonzero(isnan):
                 break
 
-    #apply max distance
+    # apply max distance
     if maxdist is not None:
         vals_out = np.where(dists_cp > maxdist, np.nan, vals_out)
 
