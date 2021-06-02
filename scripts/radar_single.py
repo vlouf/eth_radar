@@ -11,6 +11,9 @@ into what is expected for the echotop.py script to run. It also saves the data.
 .. autosummary::
     :toctree: generated/
     save_data
+
+    process_xarray
+    process_pyart
     main
 """
 # Python Standard Library
@@ -96,7 +99,7 @@ def save_data(radar, x, y, cth_grid):
     dataset.echo_top_height.attrs["valid_min"] = np.int32(0)
     dataset.echo_top_height.attrs["valid_max"] = np.int32(25000)
 
-    dataset.to_netcdf(outfilename, encoding=args)
+    dataset.to_netcdf(outfilename, encoding={"echo_top_height": {"zlib": True}})
     print(crayons.green(os.path.basename(outfilename) + " written."))
 
     return None
@@ -140,7 +143,7 @@ def process_xarray():
     x = R * np.cos(np.pi * A / 180)
     y = R * np.sin(np.pi * A / 180)
 
-    xgrid = np.arange(-MAX_RANGE, MAX_RANGE + RANGE_STEP / 2, RANGE_STEP)
+    xgrid = np.arange(-MAX_RANGE, MAX_RANGE + RANGE_STEP / 2, RANGE_STEP).astype(np.int32)
     [X, Y] = np.meshgrid(xgrid, xgrid)
     cth_grid = echotop.grid_cloud_top(
         cth, x, y, X, Y, nnearest=24, maxdist=2500
@@ -191,7 +194,7 @@ def process_pyart():
     x = R * np.cos(np.pi * A / 180)
     y = R * np.sin(np.pi * A / 180)
 
-    xgrid = np.arange(-MAX_RANGE, MAX_RANGE + RANGE_STEP / 2, RANGE_STEP)
+    xgrid = np.arange(-MAX_RANGE, MAX_RANGE + RANGE_STEP / 2, RANGE_STEP).astype(np.int32)
     [X, Y] = np.meshgrid(xgrid, xgrid)
     cth_grid = echotop.grid_cloud_top(
         cth, x, y, X, Y, nnearest=24, maxdist=2500
