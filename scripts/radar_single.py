@@ -17,16 +17,17 @@ into what is expected for the echotop.py script to run. It also saves the data.
 # Python Standard Library
 import os
 import uuid
-import datetime
 import argparse
+import datetime
 import warnings
 import traceback
 
 # Other Libraries
-import xarray as xr
-import numpy as np
+import pyart
 import crayons
 import echotop
+import numpy as np
+import xarray as xr
 
 
 def save_data(radar, x, y, cth_grid):
@@ -98,7 +99,7 @@ def save_data(radar, x, y, cth_grid):
     return None
 
 
-def main():
+def process_xarray():
     """
     Read input radar file, extract the reflectivity, compute the echo top height
     (0 dB by default) and save the result.
@@ -142,7 +143,7 @@ def main():
     y = R * np.sin(np.pi * A / 180)
 
     xgrid = np.arange(-145e3, 146e3, 2500)
-    cth_grid = echotop.KD_nn_interp(cth, x, y, xgrid, xgrid, nnearest = 24, maxdist = 2500) #nearest=24 should be enough to sample out to 2500m on a 1000m grid
+    cth_grid = echotop.grid_cloud_top(cth, x, y, xgrid, xgrid, nnearest = 24, maxdist = 2500) #nearest=24 should be enough to sample out to 2500m on a 1000m grid
     cth_grid = np.ma.masked_invalid(cth_grid).astype(np.int32).filled(FILLVALUE)
     print(crayons.green(f'Data gridded.'))
 
@@ -151,8 +152,69 @@ def main():
     return None
 
 
+def process_pyart():
+    """
+    Read input radar file, extract the reflectivity, compute the echo top height
+    (0 dB by default) and save the result.
+
+    Arguments:
+    ==========
+    INFILE: global str
+        Input file name
+    ETH_THLD: global float
+        Echo-top-height threshold (default 0 dB).
+    REFL_NAME: global str
+        Name of the reflectivity field used to compute the echo top height
+        ('reflectivity' by default) in the radar data.
+    """
+    # Load data
+    radar = pyart.aux_io.read_odim_h5(INFILE, include_fields=[REFL_NAME])
+    r = radar.range['data']
+    azimuth = radar.azimuth['data']
+    elevation = radar.elevation['data']
+    try:
+        refl = radar.fields[REFL_NAME]['data']
+    except KeyError:
+        traceback.print_exc()
+        print(crayons.red(f'Error: wrong reflectivity field name. You gave {REFL_NAME}. ' +
+                          f'The possible field names are: {radar.keys()}'))
+
+    st_sweep = radar.sweep_start_ray_index['data']
+    ed_sweep = radar.sweep_end_ray_index['data']
+    print(crayons.green(f'{os.path.basename(INFILE)} data loaded.'))
+
+    # Compute ETH
+    cth = echotop.compute_cloud_top(r, azimuth, elevation, st_sweep, ed_sweep, refl, eth_thld=ETH_THLD)
+    print(crayons.green(f'{ETH_THLD}-dB echo top height computed on polar coordinates.'))
+
+    # Grid data
+    th = 450 - azimuth[slice(st_sweep[0], ed_sweep[0] + 1)]
+    th[th < 0] += 360
+
+    R, A = np.meshgrid(r, th)
+    x = R * np.cos(np.pi * A / 180)
+    y = R * np.sin(np.pi * A / 180)
+
+    xgrid = np.arange(-145e3, 146e3, 2500)
+    cth_grid = echotop.grid_cloud_top(cth, x, y, xgrid, xgrid, nnearest = 24, maxdist = 2500) #nearest=24 should be enough to sample out to 2500m on a 1000m grid
+    cth_grid = np.ma.masked_invalid(cth_grid).astype(np.int32).filled(FILLVALUE)
+    print(crayons.green(f'Data gridded.'))
+
+    save_data(radar, x=xgrid, y=xgrid, cth_grid=cth_grid)
+
+    return None
+
+
+def main():
+    if INFILE.lower().endswith("nc"):
+        process_xarray()
+    else:
+        process_pyart()        
+    return None
+
+
 if __name__ == "__main__":
-    FILLVALUE = -9999
+    FILLVALUE: int = -9999
 
     # Numba problem workaround
     os.environ["NUMBA_DISABLE_INTEL_SVML"] = "1"
@@ -192,10 +254,10 @@ calculation, and rainfall rate estimation."""
         default='reflectivity')
 
     args = parser.parse_args()
-    INFILE = args.infile
-    OUTPATH = args.outdir
-    ETH_THLD = args.eth_thld
-    REFL_NAME = args.db_name
+    INFILE: str = args.infile
+    OUTPATH: str = args.outdir
+    ETH_THLD: float = args.eth_thld
+    REFL_NAME: str = args.db_name
 
     if not os.path.isfile(INFILE):
         parser.error(f"Input file {INFILE} does not exists.")
@@ -203,4 +265,6 @@ calculation, and rainfall rate estimation."""
     if not os.path.isdir(OUTPATH):
         parser.error(f"Output directory {OUTPATH} does not exists.")
 
-    main()
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        main()
