@@ -13,11 +13,11 @@ with open('LICENSE') as f:
 
 # What packages are required for this module to be executed?
 REQUIRED = [
-    "numpy", "crayons", "netCDF4", "xarray", "numba"
+    "numpy", "numba", "scipy", "arm_pyart"
 ]
 
 setup(
-    name='eth_radar',
+    name='echotop',
     version='1.0',
     description='Echo top height estimation from radar data.',
     long_description=readme,
@@ -32,10 +32,10 @@ setup(
         # Trove classifiers
         # Full list: https://pypi.python.org/pypi?%3Aaction=list_classifiers
         'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python',
-        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python',        
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
         'Topic :: Scientific/Engineering :: Atmospheric Science',
         'Intended Audience :: Science/Research',
     ],
