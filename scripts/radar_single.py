@@ -140,9 +140,10 @@ def process_xarray():
     x = R * np.cos(np.pi * A / 180)
     y = R * np.sin(np.pi * A / 180)
 
-    xgrid = np.arange(-145e3, 146e3, 2500)
+    xgrid = np.arange(-MAX_RANGE, MAX_RANGE + RANGE_STEP / 2, RANGE_STEP)
+    [X, Y] = np.meshgrid(xgrid, xgrid)
     cth_grid = echotop.grid_cloud_top(
-        cth, x, y, xgrid, xgrid, nnearest=24, maxdist=2500
+        cth, x, y, X, Y, nnearest=24, maxdist=2500
     )  # nearest=24 should be enough to sample out to 2500m on a 1000m grid
     cth_grid = np.ma.masked_invalid(cth_grid).astype(np.int32).filled(FILLVALUE)
     print(crayons.green(f"Data gridded."))
@@ -190,9 +191,10 @@ def process_pyart():
     x = R * np.cos(np.pi * A / 180)
     y = R * np.sin(np.pi * A / 180)
 
-    xgrid = np.arange(-145e3, 146e3, 2500)
+    xgrid = np.arange(-MAX_RANGE, MAX_RANGE + RANGE_STEP / 2, RANGE_STEP)
+    [X, Y] = np.meshgrid(xgrid, xgrid)
     cth_grid = echotop.grid_cloud_top(
-        cth, x, y, xgrid, xgrid, nnearest=24, maxdist=2500
+        cth, x, y, X, Y, nnearest=24, maxdist=2500
     )  # nearest=24 should be enough to sample out to 2500m on a 1000m grid
     cth_grid = np.ma.masked_invalid(cth_grid).astype(np.int32).filled(FILLVALUE)
     print(crayons.green(f"Data gridded."))
@@ -212,6 +214,8 @@ def main():
 
 if __name__ == "__main__":
     FILLVALUE: int = -9999
+    RANGE_STEP: int = 1000
+    MAX_RANGE: float = 150e3
 
     # Numba problem workaround
     os.environ["NUMBA_DISABLE_INTEL_SVML"] = "1"
