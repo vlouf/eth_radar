@@ -16,7 +16,7 @@ REQUIRED = ["numpy", "numba", "scipy", "arm_pyart"]
 
 setup(
     name="echotop",
-    version="1.0",
+    version="1.0.1",
     description="Echo top height estimation from radar data.",
     long_description=readme,
     author="Valentin Louf",
@@ -34,6 +34,7 @@ setup(
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
         "Topic :: Scientific/Engineering :: Atmospheric Science",
         "Intended Audience :: Science/Research",
     ],
