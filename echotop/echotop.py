@@ -131,8 +131,7 @@ def cloud_top_height(
 @jit
 def column_max_reflectivity(r, azimuth, elevation, st_sweep, ed_sweep, refl):
     """
-    Estimating Radar Echo-Top Height using the improved method from Lakshmanan
-    et al. (2013).
+    Estimating the max column reflectivity
 
     Parameters:
     ===========
@@ -152,20 +151,19 @@ def column_max_reflectivity(r, azimuth, elevation, st_sweep, ed_sweep, refl):
     Returns:
     ========
     cloudtop: <na, nr>
-        Cloud top height in meters, dimensions are na: length of the azimuth
-        array of the first sweep, and nr: length of the input 'r' array.
-    """    
+        Max reflectivity in the column using the PPI coordinates.
+    """
     na0 = st_sweep[1]
     nsweep = len(st_sweep)
     cloudtop = np.zeros((na0, len(r))) + np.NaN
-    ground_range = np.zeros((nsweep, len(r)))    
+    ground_range = np.zeros((nsweep, len(r)))
 
     for i, st in enumerate(st_sweep):
         ground_range[i, :] = r * np.cos(np.pi * elevation[st + 1] / 180)
 
     for i in range(1, len(st_sweep)):
         st = st_sweep[i]
-        ed = ed_sweep[i]        
+        ed = ed_sweep[i]
 
         st_ref = st_sweep[i - 1]
         ed_ref = ed_sweep[i - 1]
@@ -186,8 +184,8 @@ def column_max_reflectivity(r, azimuth, elevation, st_sweep, ed_sweep, refl):
                     continue
 
                 refb = refl[nbeam_ref, k]
-                refa = refl[nbeam_iter, npos]                
-                
+                refa = refl[nbeam_iter, npos]
+
                 cloudtop[j, k] = np.nanmax([refa, refb, cloudtop[j, k]])
 
     return cloudtop
