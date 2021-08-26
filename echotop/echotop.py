@@ -3,7 +3,7 @@ Determination of the echo top height from radar PPI data using the
 Lakshmanan et al. (2013). method
 @title: echotop
 @author: Valentin Louf <valentin.louf@monash.edu>
-@date: 02/06/2021
+@date: 26/08/2021
 @institution: Monash University
 @reference: Lakshmanan et al. (2013), "An Improved Method for Estimating Radar
             Echo-Top Height". Weather Forecast. 28, 481–488,
@@ -124,6 +124,71 @@ def cloud_top_height(
 
                     if height > cloudtop[j, k] or np.isnan(cloudtop[j, k]):
                         cloudtop[j, k] = height
+
+    return cloudtop
+
+
+@jit
+def column_max_reflectivity(r, azimuth, elevation, st_sweep, ed_sweep, refl):
+    """
+    Estimating Radar Echo-Top Height using the improved method from Lakshmanan
+    et al. (2013).
+
+    Parameters:
+    ===========
+    r: <nr>
+        Radar range.
+    azimuth: <time>
+        Radar azimuth.
+    elevation: <time>
+        Radar elevation.
+    st_sweep: <nsweep>
+        Radar sweep start ray index.
+    ed_sweep: <nsweep>
+        Radar sweep end ray index.
+    refl: <time, nr>
+        Radar reflectivity.
+
+    Returns:
+    ========
+    cloudtop: <na, nr>
+        Cloud top height in meters, dimensions are na: length of the azimuth
+        array of the first sweep, and nr: length of the input 'r' array.
+    """    
+    na0 = st_sweep[1]
+    nsweep = len(st_sweep)
+    cloudtop = np.zeros((na0, len(r))) + np.NaN
+    ground_range = np.zeros((nsweep, len(r)))    
+
+    for i, st in enumerate(st_sweep):
+        ground_range[i, :] = r * np.cos(np.pi * elevation[st + 1] / 180)
+
+    for i in range(1, len(st_sweep)):
+        st = st_sweep[i]
+        ed = ed_sweep[i]        
+
+        st_ref = st_sweep[i - 1]
+        ed_ref = ed_sweep[i - 1]
+
+        for j in range(na0):
+            nbeam_ref = np.argmin(np.abs(azimuth[st_ref:ed_ref] - azimuth[j])) + st_ref
+            nbeam_iter = np.argmin(np.abs(azimuth[st:ed] - azimuth[j])) + st
+
+            if np.abs(azimuth[nbeam_ref] - azimuth[nbeam_iter]) > 5:
+                continue
+
+            for k in range(len(r)):
+
+                gr_ref = ground_range[i - 1, k]
+                npos = np.argmin(np.abs(ground_range[i, :] - gr_ref))
+
+                if np.abs(ground_range[i, npos] - ground_range[0, k] > 1000):
+                    continue
+
+                refb = refl[nbeam_ref, k]
+                refa = refl[nbeam_iter, npos]                
+                
+                cloudtop[j, k] = np.nanmax([refa, refb, cloudtop[j, k]])
 
     return cloudtop
 
